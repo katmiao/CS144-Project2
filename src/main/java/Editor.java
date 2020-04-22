@@ -62,6 +62,7 @@ public class Editor extends HttpServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException
     {
+        // GET available for open, list, preview
         String queryStr = request.getQueryString();
         if(queryStr != null && !queryStr.equals(""))
         {
@@ -79,7 +80,7 @@ public class Editor extends HttpServlet {
             }
 
             String actionVal = nameValDict.get("action");
-            // GET available for open, list, preview
+            
             if(actionVal == null)
             {
                 this.handleList(request, response);
@@ -90,7 +91,6 @@ public class Editor extends HttpServlet {
             }
             else if(actionVal.equals("list"))
             {
-                // TODO: GET ALL POSTS FROM DB AND DISPLAY THEM
                 this.handleList(request, response);
             }
             else if(actionVal.equals("preview"))
@@ -112,7 +112,7 @@ public class Editor extends HttpServlet {
         throws ServletException, IOException 
     {
         // implement your POST method handling code here
-        // GET available for open, list, preview, save, delete
+        // POST available for open, list, preview, save, delete
         String actionVal = request.getParameter("action");
         if(actionVal == null)
         {
@@ -124,7 +124,6 @@ public class Editor extends HttpServlet {
         }
         else if(actionVal.equals("list"))
         {
-            // TODO: GET ALL POSTS FROM DB AND DISPLAY THEM
             this.handleList(request, response);
         }
         else if(actionVal.equals("preview"))
@@ -134,6 +133,12 @@ public class Editor extends HttpServlet {
         else if(actionVal.equals("save"))
         {
             // TODO: HANDLE SAVE
+            // required parameters: username, postid, title, body
+            // if postid greater than 0
+            // check to see if username and postid exist in the database
+            // if exists, update the row in the database, and return to list page
+            // if not, don't make changes in the database, and return to list page
+            // if postid less than or equal to 0, make a new post with the next postid and save it in the database and return to list page
             try
             {
                 Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/CS144", "cs144", "");
@@ -263,7 +268,6 @@ public class Editor extends HttpServlet {
     private void handleOpen(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException
     {
-        // TODO: CHECK QUERYSTRING/PARAMETERS AND OPEN THE REQUESTED POST
         String username = request.getParameter("username");
         String postidStr = request.getParameter("postid");
         String title = "";
