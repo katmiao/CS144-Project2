@@ -60,14 +60,14 @@ public class Editor extends HttpServlet {
      *      HttpServletResponse response)
      */
     public void doGet(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException
+    throws ServletException, IOException
     {
         // GET available for open, list, preview
         String queryStr = request.getQueryString();
         if(queryStr != null && !queryStr.equals(""))
         {
             Hashtable<String, String> nameValDict = new Hashtable<String, String>();
-        
+
             String[] pairs = queryStr.split("&", 0);
             for(int i = 0; i < pairs.length; i++)
             {
@@ -95,7 +95,7 @@ public class Editor extends HttpServlet {
             }
             else if(actionVal.equals("preview"))
             {
-                // HANDLE PREVIEW
+                this.handlePreview(request, response);
             }
             else
             {
@@ -109,7 +109,7 @@ public class Editor extends HttpServlet {
     }
 
     public void doPost(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException 
+    throws ServletException, IOException 
     {
         // implement your POST method handling code here
         // POST available for open, list, preview, save, delete
@@ -128,49 +128,15 @@ public class Editor extends HttpServlet {
         }
         else if(actionVal.equals("preview"))
         {
-            // HANDLE PREVIEW
+            this.handlePreview(request, response);
         }
         else if(actionVal.equals("save"))
         {
-            // TODO: HANDLE SAVE
-            // required parameters: username, postid, title, body
-            // if postid greater than 0
-            // check to see if username and postid exist in the database
-            // if exists, update the row in the database, and return to list page
-            // if not, don't make changes in the database, and return to list page
-            // if postid less than or equal to 0, make a new post with the next postid and save it in the database and return to list page
-            try
-            {
-                Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/CS144", "cs144", "");
-                Statement stmt = con.createStatement();
-                String sql = "SELECT * FROM Posts;";
-                ResultSet rs = stmt.executeQuery(sql);
-
-                String username, title, body;
-                int postid;
-
-                while(rs.next())
-                {
-                    username = rs.getString("username");
-                    title = rs.getString("title");
-                    body = rs.getString("body");
-                    postid = rs.getInt("postid");
-                    System.err.println("username: " + username + ", title: " + title + ", body: " + body + ", postid: " + postid);
-                }
-            }
-            catch(Exception e)
-            {
-                System.err.println(e);
-                return;
-            }
-
-            
-
-            request.getRequestDispatcher("/list.jsp").forward(request, response);
+            this.handleSave(request, response);
         }
         else if(actionVal.equals("delete"))
         {
-            // TODO: HANDLE DELETE
+            this.handleDelete(request, response);
         }
         else 
         {
@@ -179,7 +145,7 @@ public class Editor extends HttpServlet {
     }
 
     private void handleList(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException
+    throws ServletException, IOException
     {
         String passedUsername = request.getParameter("username");
         if(passedUsername == null || passedUsername.equals(""))
@@ -266,7 +232,7 @@ public class Editor extends HttpServlet {
     }
 
     private void handleOpen(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException
+    throws ServletException, IOException
     {
         String username = request.getParameter("username");
         String postidStr = request.getParameter("postid");
@@ -301,9 +267,9 @@ public class Editor extends HttpServlet {
                         pstmt = con.prepareStatement("SELECT * FROM Posts WHERE username = ? AND postid = ?;");
                         pstmt.setString(1, username);
                         pstmt.setInt(2, postid);
-        
+
                         rs = pstmt.executeQuery();
-        
+
                         // should only iterate once, even though it's a while loop
                         while(rs.next())
                         {
@@ -330,7 +296,7 @@ public class Editor extends HttpServlet {
                                 System.err.println("SQL Exception: unable to close ResultSet: " + e);
                             }
                         }
-            
+
                         if(pstmt != null)
                         {
                             try
@@ -342,7 +308,7 @@ public class Editor extends HttpServlet {
                                 System.err.println("SQL Exception: unable to close PreparedStatement: " + e);
                             }
                         }
-            
+
                         if(con != null)
                         {
                             try
@@ -386,13 +352,164 @@ public class Editor extends HttpServlet {
         }
     }
 
-    private void handleSave(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException
+    private void handlePreview(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException
     {
     }
 
+    private void handleSave(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException
+    {
+        try
+        {
+            Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/CS144", "cs144", "");
+
+            String username = request.getParameter("username");
+            String title = request.getParameter("title");
+            String body = request.getParameter("body");
+            Int postid = request.getParameter("postid");
+
+            System.err.println("username: " + username + ", title: " + title + ", body: " + body + ", postid: " + postid);
+
+            // post should exist, update it
+            if(postid > 0) {
+                // check to see if username and postid exist in the database
+                pstmt = con.prepareStatement("SELECT * FROM Posts WHERE username = ? AND postid = ?;");
+                pstmt.setString(1, username);
+                pstmt.setInt(2, postid);
+
+                rs = pstmt.executeQuery();
+                while(rs.next())
+                {
+                    // post exists, update the rows in the database
+                    updatepsmt = con.prepareStatement("UPDATE Posts SET title = ?, body = ? WHERE username = ? AND postid = ?;");
+                    updatepsmt.setString(1, title);
+                    updatepsmt.setString(2, body);
+                    updatepsmt.setString(4, username);
+                    updatepsmt.setInt(5, postid);
+
+                    updatepsmt.executeQuery();
+                }
+            }
+
+            // new post
+            else {
+                // find next postid
+                postidpsmt = con.prepareStatement("SELECT MAX(postid) FROM Posts;");
+                rs = pstmt.executeQuery();
+                while(rs.next())
+                {
+                    postid = rs.getInt("postid") + 1;
+                }
+
+                // make new post with the next postid, save it to the database
+                insertpsmt = con.prepareStatement("INSERT INTO Posts(username, title, body, postid) VALUES ?, ?, ?, ?);");
+                insertpsmt.setString(1, username);
+                insertpsmt.setString(2, title);
+                insertpsmt.setString(3, body);
+                insertpsmt.setInt(4, postid);
+
+                insertpsmt.executeQuery();
+            }
+            
+        }
+        catch(Exception e)
+        {
+            System.err.println(e);
+            return;
+        }
+        finally
+        {
+            if(rs != null) {
+                try {
+                    rs.close();
+                }
+                catch(SQLException e) {
+                    System.err.println("SQL Exception: unable to close ResultSet: " + e);
+                }
+            }
+
+            if(stmt != null) {
+                try {
+                    stmt.close();
+                }
+                catch(SQLException e) {
+                    System.err.println("SQL Exception: unable to close Statement: " + e);
+                }
+            }
+
+            if(con != null) {
+                try {
+                    con.close();
+                }
+                catch(SQLException e) {
+                    System.err.println("SQL Exception: unable to close Connection: " + e);
+                }
+            }
+        }
+        request.getRequestDispatcher("/list.jsp").forward(request, response);
+    }
+
+    private void handleDelete(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException
+    {
+        try
+        {
+            Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/CS144", "cs144", "");
+
+            String username = request.getParameter("username");
+            Int postid = request.getParameter("postid");
+
+            System.err.println("username: " + username + ", postid: " + postid);
+
+            // post should exist, delete it
+            if(postid > 0) {
+                pstmt = con.prepareStatement("DELETE FROM Posts WHERE username = ? AND postid = ?;");
+                pstmt.setString(1, username);
+                pstmt.setInt(2, postid);
+
+                rs = pstmt.executeQuery();
+            }    
+        }
+        catch(Exception e)
+        {
+            System.err.println(e);
+            return;
+        }
+        finally
+        {
+            if(rs != null) {
+                try {
+                    rs.close();
+                }
+                catch(SQLException e) {
+                    System.err.println("SQL Exception: unable to close ResultSet: " + e);
+                }
+            }
+
+            if(stmt != null) {
+                try {
+                    stmt.close();
+                }
+                catch(SQLException e) {
+                    System.err.println("SQL Exception: unable to close Statement: " + e);
+                }
+            }
+
+            if(con != null) {
+                try {
+                    con.close();
+                }
+                catch(SQLException e) {
+                    System.err.println("SQL Exception: unable to close Connection: " + e);
+                }
+            }
+        }
+        request.getRequestDispatcher("/list.jsp").forward(request, response);
+    }
+
     private void handleInvalidRequest(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException
+    throws ServletException, IOException
     {
         request.getRequestDispatcher("/invalid_request.jsp").forward(request, response);
     }
