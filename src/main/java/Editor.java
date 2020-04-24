@@ -466,53 +466,63 @@ public class Editor extends HttpServlet {
     {
         Connection con = null;
         PreparedStatement pstmt = null;
+        String username = request.getParameter("username");
+        String postidStr = request.getParameter("postid");
 
-        try
-        {
-            con = DriverManager.getConnection("jdbc:mysql://localhost:3306/CS144", "cs144", "");
+        if(username != null && postidStr != null && username != "" && postidStr != "")
+        {        
+            try
+            {
+                con = DriverManager.getConnection("jdbc:mysql://localhost:3306/CS144", "cs144", "");
+                
+                int postid = Integer.parseInt(postidStr);
 
-            String username = request.getParameter("username");
-            String postidStr = request.getParameter("postid");
-            int postid = Integer.parseInt(postidStr);
+                System.err.println("username: " + username + ", postid: " + postid);
 
-            System.err.println("username: " + username + ", postid: " + postid);
+                // post should exist, delete it
+                if(postid > 0) {
+                    pstmt = con.prepareStatement("DELETE FROM Posts WHERE username = ? AND postid = ?;");
+                    pstmt.setString(1, username);
+                    pstmt.setInt(2, postid);
 
-            // post should exist, delete it
-            if(postid > 0) {
-                pstmt = con.prepareStatement("DELETE FROM Posts WHERE username = ? AND postid = ?;");
-                pstmt.setString(1, username);
-                pstmt.setInt(2, postid);
+                    pstmt.executeUpdate();
+                }    
 
-                pstmt.executeQuery();
-            }    
-        }
-        catch(Exception e)
-        {
-            System.err.println(e);
-            return;
-        }
-        finally
-        {
+            }
+            catch(Exception e)
+            {
+                System.err.println(e);
+                return;
+            }
+            finally
+            {
 
-            if(pstmt != null) {
-                try {
-                    pstmt.close();
+                if(pstmt != null) {
+                    try {
+                        pstmt.close();
+                    }
+                    catch(SQLException e) {
+                        System.err.println("SQL Exception: unable to close PreparedStatement: " + e);
+                    }
                 }
-                catch(SQLException e) {
-                    System.err.println("SQL Exception: unable to close PreparedStatement: " + e);
+
+                if(con != null) {
+                    try {
+                        con.close();
+                    }
+                    catch(SQLException e) {
+                        System.err.println("SQL Exception: unable to close Connection: " + e);
+                    }
                 }
             }
 
-            if(con != null) {
-                try {
-                    con.close();
-                }
-                catch(SQLException e) {
-                    System.err.println("SQL Exception: unable to close Connection: " + e);
-                }
-            }
+            request.setAttribute("username", username);
+            this.handleList(request, response);
         }
-        request.getRequestDispatcher("/list.jsp").forward(request, response);
+        else
+        {
+            this.handleInvalidRequest(request, response);
+        }
     }
 
     private void handleInvalidRequest(HttpServletRequest request, HttpServletResponse response)
