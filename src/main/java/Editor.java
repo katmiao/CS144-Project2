@@ -373,7 +373,11 @@ public class Editor extends HttpServlet {
             String title = request.getParameter("title");
             String body = request.getParameter("body");
             String postidStr = request.getParameter("postid");
-            int postid = Integer.parseInt(postidStr);
+            int postid = -1;
+
+            if (postidStr != null && postidStr != "") {
+                postid = Integer.parseInt(postidStr);
+            }
 
             System.err.println("username: " + username + ", title: " + title + ", body: " + body + ", postid: " + postid);
 
