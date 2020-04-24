@@ -33,3 +33,6 @@
     </div>
 </body>
 </html>
+
+String postidStr = request.getParameter("postid");
+        int postid = Integer.parseInt(postidStr);
