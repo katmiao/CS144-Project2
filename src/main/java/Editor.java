@@ -156,14 +156,14 @@ public class Editor extends HttpServlet {
         }
 
         Connection con = null;
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
         try
         {
             con = DriverManager.getConnection("jdbc:mysql://localhost:3306/CS144", "cs144", "");
-            stmt = con.createStatement();
-            String sql = "SELECT * FROM Posts;";
-            rs = stmt.executeQuery(sql);
+            stmt = con.prepareStatement("SELECT * FROM Posts WHERE username = ?;");
+            stmt.setString(1, passedUsername);
+            rs = stmt.executeQuery();
 
             String username, title, body;
             Timestamp createdDate, modifiedDate;
@@ -229,6 +229,7 @@ public class Editor extends HttpServlet {
             }
         }
 
+        request.setAttribute("username", passedUsername);
         request.getRequestDispatcher("/list.jsp").forward(request, response);
     }
 
@@ -345,6 +346,7 @@ public class Editor extends HttpServlet {
 
             request.setAttribute("title", title);
             request.setAttribute("body", body);
+            request.setAttribute("username", username);
             request.getRequestDispatcher("/edit.jsp").forward(request, response);
         }
         else
