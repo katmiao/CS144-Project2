@@ -408,11 +408,11 @@ public class Editor extends HttpServlet {
             // new post
             else {
                 // find next postid
-                pstmt = con.prepareStatement("SELECT MAX(postid) FROM Posts;");
+                pstmt = con.prepareStatement("SELECT MAX(postid) AS maxPID FROM Posts;");
                 rs = pstmt.executeQuery();
                 while(rs.next())
                 {
-                    postid = rs.getInt("postid") + 1;
+                    postid = rs.getInt("maxPID") + 1;
                 }
                 System.out.println("-----postid (new) = " + postid);
 
