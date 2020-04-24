@@ -13,7 +13,11 @@
 <body>
     <div>
         <form action="post" id="0">
-            <input type="hidden" name="username" value="test_user">
+            <jsp:element name="input">
+                <jsp:attribute name="type">hidden</jsp:attribute>
+                <jsp:attribute name="name">username</jsp:attribute>
+                <jsp:attribute name="value"><%= request.getAttribute("username") %></jsp:attribute>
+            </jsp:element>
             <input type="hidden" name="postid" value="0">
             <button type="submit" name="action" value="open">New Post</button>
         </form>
