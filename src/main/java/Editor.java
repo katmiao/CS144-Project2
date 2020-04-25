@@ -64,8 +64,13 @@ public class Editor extends HttpServlet {
     {
         // GET available for open, list, preview
         String queryStr = request.getQueryString();
+
         if(queryStr != null && !queryStr.equals(""))
         {
+
+            
+            System.err.println("-----doGet!");
+
             Hashtable<String, String> nameValDict = new Hashtable<String, String>();
 
             String[] pairs = queryStr.split("&", 0);
@@ -77,9 +82,11 @@ public class Editor extends HttpServlet {
                 if(p.length != 2)
                     this.handleInvalidRequest(request, response);
                 nameValDict.put(p[0], p[1]);
+                System.err.println("name = " + p[0] + ", val = " + p[1]);
             }
 
             String actionVal = nameValDict.get("action");
+            System.err.println("actionVal = " + actionVal);
             
             if(actionVal == null)
             {
@@ -115,6 +122,13 @@ public class Editor extends HttpServlet {
         // POST available for open, list, preview, save, delete
         String actionVal = request.getParameter("action");
         System.err.println("-----doPost! actionVal = " + actionVal);
+
+        Enumeration<String> params = request.getParameterNames(); 
+        while(params.hasMoreElements()){
+            String paramName = params.nextElement();
+            System.out.println("Parameter Name - "+paramName+", Value - "+request.getParameter(paramName));
+        }
+
         if(actionVal == null)
         {
             this.handleList(request, response);
@@ -243,19 +257,25 @@ public class Editor extends HttpServlet {
         // username and postid were supplied
         if(username != null && postidStr != null && !username.equals("") && !postidStr.equals(""))
         {
+            System.err.println("-----1");
+
             int postid = Integer.parseInt(postidStr);
             Connection con = null;
             PreparedStatement pstmt = null;
             ResultSet rs = null;
 
+            System.err.println("username: " + username + ", postid: " + postid);
+
             // post id is greater than 0
             if(postid > 0)
             {
+                System.err.println("-----2");
                 String passedTitle = request.getParameter("title");
                 String passedBody = request.getParameter("body");
                 // if both title and body are passed in, use them as default values
                 if(passedTitle != null && passedBody != null)
                 {
+                    System.err.println("-----3");
                     title = passedTitle;
                     body = passedBody;
                 }
@@ -264,6 +284,7 @@ public class Editor extends HttpServlet {
                 {
                     try
                     {
+                        System.err.println("-----4");
                         con = DriverManager.getConnection("jdbc:mysql://localhost:3306/CS144", "cs144", "");
                         pstmt = con.prepareStatement("SELECT * FROM Posts WHERE username = ? AND postid = ?;");
                         pstmt.setString(1, username);
@@ -326,6 +347,7 @@ public class Editor extends HttpServlet {
                     // post was NOT found
                     if(title.equals("") && body.equals(""))
                     {
+                        System.err.println("-----5");
                         this.handleInvalidRequest(request, response);
                     }
                 }
@@ -333,6 +355,7 @@ public class Editor extends HttpServlet {
             // postid is less than or equal to 0
             else
             {   
+                System.err.println("-----6");
                 // if both title and body are passed in, use them as default values
                 String passedTitle = request.getParameter("title");
                 String passedBody = request.getParameter("body");
@@ -342,6 +365,7 @@ public class Editor extends HttpServlet {
                     body = passedBody;
                 }
             }
+            System.err.println("title: " + title + ", body: " + body);
 
             request.setAttribute("title", title);
             request.setAttribute("body", body);
@@ -356,6 +380,28 @@ public class Editor extends HttpServlet {
     private void handlePreview(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException
     {
+        String username = request.getParameter("username");
+        String title = request.getParameter("title");
+        String body = request.getParameter("body");
+        String postidStr = request.getParameter("postid");
+        int postid = -1;
+
+        if (postidStr != null && postidStr != "") {
+            postid = Integer.parseInt(postidStr);
+        }
+
+        System.err.println("username: " + username + ", title: " + title + ", body: " + body + ", postid: " + postid);
+
+        Parser parser = Parser.builder().build();
+        HtmlRenderer renderer = HtmlRenderer.builder().build();
+
+        String markdownTitle = renderer.render(parser.parse(title));
+        String markdownBody = renderer.render(parser.parse(body));
+
+        request.setAttribute("markdownTitle", markdownTitle);
+        request.setAttribute("markdownBody", markdownBody);
+
+        request.getRequestDispatcher("/preview.jsp").forward(request, response);
     }
 
     private void handleSave(HttpServletRequest request, HttpServletResponse response)
@@ -485,7 +531,7 @@ public class Editor extends HttpServlet {
                 pstmt.setString(1, username);
                 pstmt.setInt(2, postid);
 
-                pstmt.executeQuery();
+                pstmt.executeUpdate();
             }    
         }
         catch(Exception e)

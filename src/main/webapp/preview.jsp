@@ -6,33 +6,20 @@
     <title>Preview Post</title>
 </head>
 <body>
-    <div><h1>Preview Post</h1></div>
-    <form action="post" method="post">
-        <div>
-            <button type="submit" name="action" value="edit">Close Preview</button>
-        </div>
-        <div>
-            <label for="title">Title</label>
-            <jsp:element name="input">
-                <jsp:attribute name="type">text</jsp:attribute>
-                <jsp:attribute name="id">title</jsp:attribute>
-                <jsp:attribute name="value"><%= request.getAttribute("title") %></jsp:attribute>
-            </jsp:element>
-        </div>
-        <div>
-            <label for="body">Body</label>
-            <jsp:element name="textarea">
-                <jsp:attribute name="style">height: 20rem</jsp:attribute>
-                <jsp:attribute name="id">body</jsp:attribute>
-                <jsp:body><%= request.getAttribute("body") %></jsp:body>
-            </jsp:element>
-        </div>
-    </form>
+    <div>
+        <form action="post" method="post">
+            <div>
+                <button type="submit" name="action" value="open">Close Preview</button>
+            </div>
+            <input type="hidden" name="username" value='<%= request.getParameter("username") %>'>
+            <input type="hidden" name="postid" value='<%= request.getParameter("postid") %>'>
+            <input type="hidden" name="title" value='<%= request.getParameter("title") %>'>
+            <input type="hidden" name="body" value='<%= request.getParameter("body") %>'>
+        </form>
     </div>
-        
+    <div>
+        <h1><%= request.getAttribute("markdownTitle") %></h1><br>
+        <div><p><%= request.getAttribute("markdownBody") %></p></div>
     </div>
 </body>
 </html>
-
-String postidStr = request.getParameter("postid");
-        int postid = Integer.parseInt(postidStr);

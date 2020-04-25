@@ -7,7 +7,7 @@
 </head>
 <body>
     <div><h1>Edit Post</h1></div>
-    <form action="/editor/post" method="post">
+    <form action="post" method="post">
         <div>
             <jsp:element name="input">
                 <jsp:attribute name="type">hidden</jsp:attribute>
@@ -23,7 +23,7 @@
             <label for="title">Title</label>
             <jsp:element name="input">
                 <jsp:attribute name="type">text</jsp:attribute>
-                <jsp:attribute name="id">title</jsp:attribute>
+                <jsp:attribute name="name">title</jsp:attribute>
                 <jsp:attribute name="value"><%= request.getAttribute("title") %></jsp:attribute>
             </jsp:element>
         </div>
@@ -31,7 +31,7 @@
             <label for="body">Body</label>
             <jsp:element name="textarea">
                 <jsp:attribute name="style">height: 20rem</jsp:attribute>
-                <jsp:attribute name="id">body</jsp:attribute>
+                <jsp:attribute name="name">body</jsp:attribute>
                 <jsp:body><%= request.getAttribute("body") %></jsp:body>
             </jsp:element>
         </div>
