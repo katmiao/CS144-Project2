@@ -363,7 +363,8 @@ public class Editor extends HttpServlet {
                     if(title.equals("") && body.equals(""))
                     {
                         System.err.println("-----5");
-                        this.handleInvalidRequest(request, response);
+                        this.handleFileNotFound(request, response);
+                        return;
                     }
                 }
             }
@@ -619,6 +620,13 @@ public class Editor extends HttpServlet {
     {
         response.setStatus(400);
         request.getRequestDispatcher("/invalid_request.jsp").forward(request, response);
+    }
+
+    private void handleFileNotFound(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException
+    {
+        response.setStatus(404);
+        request.getRequestDispatcher("/not_found.jsp").forward(request, response);
     }
 }
 
