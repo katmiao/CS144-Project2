@@ -21,6 +21,7 @@ import java.io.PrintWriter;
 import java.util.*;
 import post.*;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 
 /**
  * Servlet implementation class for Servlet: ConfigurationTest
@@ -400,6 +401,14 @@ public class Editor extends HttpServlet {
         String title = request.getParameter("title");
         String body = request.getParameter("body");
         String postidStr = request.getParameter("postid");
+        
+        if(username == null || title == null || body == null ||postidStr == null)
+        {
+            System.err.println("one or more of the preview parameters were not provided");
+            this.handleInvalidRequest(request, response);
+            return;
+        }
+        
         int postid = -1;
 
         try
@@ -446,6 +455,7 @@ public class Editor extends HttpServlet {
             String body = request.getParameter("body");
             String postidStr = request.getParameter("postid");
             int postid = -1;
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
             if (postidStr != null && postidStr != "") {
                 postid = Integer.parseInt(postidStr);
@@ -465,11 +475,14 @@ public class Editor extends HttpServlet {
                 while(rs.next())
                 {
                     // post exists, update the rows in the database
-                    pstmt = con.prepareStatement("UPDATE Posts SET title = ?, body = ? WHERE username = ? AND postid = ?;");
+                    pstmt = con.prepareStatement("UPDATE Posts SET title = ?, body = ?, modified = ? WHERE username = ? AND postid = ?;");
                     pstmt.setString(1, title);
                     pstmt.setString(2, body);
-                    pstmt.setString(3, username);
-                    pstmt.setInt(4, postid);
+                    Date currDate = new Date();
+                    String modified = dateFormat.format(currDate);
+                    pstmt.setString(3, modified);
+                    pstmt.setString(4, username);
+                    pstmt.setInt(5, postid);
 
                     pstmt.executeUpdate();
                 }
@@ -487,12 +500,15 @@ public class Editor extends HttpServlet {
                 System.out.println("-----postid (new) = " + postid);
 
                 // make new post with the next postid, save it to the database
-                pstmt = con.prepareStatement("INSERT INTO Posts(username, title, body, postid) VALUES (?, ?, ?, ?);");
+                pstmt = con.prepareStatement("INSERT INTO Posts(username, title, body, postid, created, modified) VALUES (?, ?, ?, ?, ?, ?);");
                 pstmt.setString(1, username);
                 pstmt.setString(2, title);
                 pstmt.setString(3, body);
                 pstmt.setInt(4, postid);
-
+                Date currDate = new Date();
+                String modified = dateFormat.format(currDate);
+                pstmt.setString(5, modified);
+                pstmt.setString(6, modified);
                 pstmt.executeUpdate();
             }
             
