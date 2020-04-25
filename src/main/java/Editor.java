@@ -170,14 +170,14 @@ public class Editor extends HttpServlet {
         }
 
         Connection con = null;
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
         try
         {
             con = DriverManager.getConnection("jdbc:mysql://localhost:3306/CS144", "cs144", "");
-            stmt = con.createStatement();
-            String sql = "SELECT * FROM Posts;";
-            rs = stmt.executeQuery(sql);
+            stmt = con.prepareStatement("SELECT * FROM Posts WHERE username = ?;");
+            stmt.setString(1, passedUsername);
+            rs = stmt.executeQuery();
 
             String username, title, body;
             Timestamp createdDate, modifiedDate;
@@ -243,6 +243,7 @@ public class Editor extends HttpServlet {
             }
         }
 
+        request.setAttribute("username", passedUsername);
         request.getRequestDispatcher("/list.jsp").forward(request, response);
     }
 
@@ -369,6 +370,7 @@ public class Editor extends HttpServlet {
 
             request.setAttribute("title", title);
             request.setAttribute("body", body);
+            request.setAttribute("username", username);
             request.getRequestDispatcher("/edit.jsp").forward(request, response);
         }
         else
@@ -514,53 +516,61 @@ public class Editor extends HttpServlet {
     {
         Connection con = null;
         PreparedStatement pstmt = null;
+        String username = request.getParameter("username");
+        String postidStr = request.getParameter("postid");
 
-        try
-        {
-            con = DriverManager.getConnection("jdbc:mysql://localhost:3306/CS144", "cs144", "");
+        if(username != null && postidStr != null && username != "" && postidStr != "")
+        {        
+            try
+            {
+                con = DriverManager.getConnection("jdbc:mysql://localhost:3306/CS144", "cs144", "");
+                
+                int postid = Integer.parseInt(postidStr);
 
-            String username = request.getParameter("username");
-            String postidStr = request.getParameter("postid");
-            int postid = Integer.parseInt(postidStr);
+                System.err.println("username: " + username + ", postid: " + postid);
 
-            System.err.println("username: " + username + ", postid: " + postid);
-
-            // post should exist, delete it
-            if(postid > 0) {
-                pstmt = con.prepareStatement("DELETE FROM Posts WHERE username = ? AND postid = ?;");
-                pstmt.setString(1, username);
-                pstmt.setInt(2, postid);
-
-                pstmt.executeUpdate();
-            }    
-        }
-        catch(Exception e)
-        {
-            System.err.println(e);
-            return;
-        }
-        finally
-        {
-
-            if(pstmt != null) {
-                try {
-                    pstmt.close();
+                // post should exist, delete it
+                if(postid > 0) {
+                    pstmt = con.prepareStatement("DELETE FROM Posts WHERE username = ? AND postid = ?;");
+                    pstmt.setString(1, username);
+                    pstmt.setInt(2, postid);
+                    pstmt.executeUpdate();
                 }
-                catch(SQLException e) {
-                    System.err.println("SQL Exception: unable to close PreparedStatement: " + e);
+            }
+            catch(Exception e)
+            {
+                System.err.println(e);
+                return;
+            }
+            finally
+            {
+
+                if(pstmt != null) {
+                    try {
+                        pstmt.close();
+                    }
+                    catch(SQLException e) {
+                        System.err.println("SQL Exception: unable to close PreparedStatement: " + e);
+                    }
+                }
+
+                if(con != null) {
+                    try {
+                        con.close();
+                    }
+                    catch(SQLException e) {
+                        System.err.println("SQL Exception: unable to close Connection: " + e);
+                    }
                 }
             }
 
-            if(con != null) {
-                try {
-                    con.close();
-                }
-                catch(SQLException e) {
-                    System.err.println("SQL Exception: unable to close Connection: " + e);
-                }
-            }
+            request.setAttribute("username", username);
+            this.handleList(request, response);
         }
-        request.getRequestDispatcher("/list.jsp").forward(request, response);
+        else
+        {
+            this.handleInvalidRequest(request, response);
+        }
     }
 
     private void handleInvalidRequest(HttpServletRequest request, HttpServletResponse response)
