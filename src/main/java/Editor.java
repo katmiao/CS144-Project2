@@ -260,7 +260,18 @@ public class Editor extends HttpServlet {
         {
             System.err.println("-----1");
 
-            int postid = Integer.parseInt(postidStr);
+            int postid;
+            try
+            {
+                postid = Integer.parseInt(postidStr);
+            } 
+            catch(Exception e)
+            {
+                System.err.println("in handle open, supplied postid was not a number");
+                this.handleInvalidRequest(request, response);
+                return;
+            }
+
             Connection con = null;
             PreparedStatement pstmt = null;
             ResultSet rs = null;
@@ -371,6 +382,7 @@ public class Editor extends HttpServlet {
             request.setAttribute("title", title);
             request.setAttribute("body", body);
             request.setAttribute("username", username);
+            request.setAttribute("postid", postid);
             request.getRequestDispatcher("/edit.jsp").forward(request, response);
         }
         else
@@ -388,8 +400,15 @@ public class Editor extends HttpServlet {
         String postidStr = request.getParameter("postid");
         int postid = -1;
 
-        if (postidStr != null && postidStr != "") {
+        try
+        {
             postid = Integer.parseInt(postidStr);
+        }
+        catch(Exception e)
+        {
+            System.err.println("the supplied postid was not numberic");
+            this.handleInvalidRequest(request, response);
+            return;
         }
 
         System.err.println("username: " + username + ", title: " + title + ", body: " + body + ", postid: " + postid);
@@ -402,7 +421,9 @@ public class Editor extends HttpServlet {
 
         request.setAttribute("markdownTitle", markdownTitle);
         request.setAttribute("markdownBody", markdownBody);
-
+        request.setAttribute("title", title);
+        request.setAttribute("body", body);
+        request.setAttribute("postid", postid);
         request.getRequestDispatcher("/preview.jsp").forward(request, response);
     }
 
@@ -519,7 +540,7 @@ public class Editor extends HttpServlet {
         String username = request.getParameter("username");
         String postidStr = request.getParameter("postid");
 
-        if(username != null && postidStr != null && username != "" && postidStr != "")
+        if(username != null && postidStr != null && !username.equals("") && !postidStr.equals(""))
         {        
             try
             {
@@ -576,6 +597,7 @@ public class Editor extends HttpServlet {
     private void handleInvalidRequest(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException
     {
+        response.setStatus(400);
         request.getRequestDispatcher("/invalid_request.jsp").forward(request, response);
     }
 }
