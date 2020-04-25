@@ -169,6 +169,8 @@ public class Editor extends HttpServlet {
             return;
         }
 
+        System.err.println("-----handleList! username = " + passedUsername);
+
         Connection con = null;
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -434,11 +436,12 @@ public class Editor extends HttpServlet {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
+        String username = "";
         try
         {
             con = DriverManager.getConnection("jdbc:mysql://localhost:3306/CS144", "cs144", "");
 
-            String username = request.getParameter("username");
+            username = request.getParameter("username");
             String title = request.getParameter("title");
             String body = request.getParameter("body");
             String postidStr = request.getParameter("postid");
@@ -465,8 +468,8 @@ public class Editor extends HttpServlet {
                     pstmt = con.prepareStatement("UPDATE Posts SET title = ?, body = ? WHERE username = ? AND postid = ?;");
                     pstmt.setString(1, title);
                     pstmt.setString(2, body);
-                    pstmt.setString(4, username);
-                    pstmt.setInt(5, postid);
+                    pstmt.setString(3, username);
+                    pstmt.setInt(4, postid);
 
                     pstmt.executeUpdate();
                 }
@@ -484,7 +487,7 @@ public class Editor extends HttpServlet {
                 System.out.println("-----postid (new) = " + postid);
 
                 // make new post with the next postid, save it to the database
-                pstmt = con.prepareStatement("INSERT INTO Posts(username, title, body, postid) VALUES ?, ?, ?, ?);");
+                pstmt = con.prepareStatement("INSERT INTO Posts(username, title, body, postid) VALUES (?, ?, ?, ?);");
                 pstmt.setString(1, username);
                 pstmt.setString(2, title);
                 pstmt.setString(3, body);
@@ -529,7 +532,8 @@ public class Editor extends HttpServlet {
             }
         }
         System.out.println("-----return to list");
-        request.getRequestDispatcher("/list.jsp").forward(request, response);
+        request.setAttribute("username", username);
+        handleList(request, response);
     }
 
     private void handleDelete(HttpServletRequest request, HttpServletResponse response)
