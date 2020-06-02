@@ -464,57 +464,63 @@ public class Editor extends HttpServlet {
 
             System.err.println("username: " + username + ", title: " + title + ", body: " + body + ", postid: " + postid);
 
-            // if postid == 0, assign a new postid, and save the content as a “new post”
-            if (postid == 0) {
-                // find next postid
-                pstmt = con.prepareStatement("SELECT MAX(postid) AS maxPID FROM Posts;");
-                rs = pstmt.executeQuery();
-                while(rs.next())
-                {
-                    postid = rs.getInt("maxPID") + 1;
-                }
-                System.out.println("-----postid (new) = " + postid);
+            if(username != null && postid >= 0 && !username.equals("") && title != null && !title.equals("") && body != null && !body.equals(""))
+            {
+                // if postid == 0, assign a new postid, and save the content as a “new post”
+                if (postid == 0) {
+                    // find next postid
+                    pstmt = con.prepareStatement("SELECT MAX(postid) AS maxPID FROM Posts;");
+                    rs = pstmt.executeQuery();
+                    while(rs.next())
+                    {
+                        postid = rs.getInt("maxPID") + 1;
+                    }
+                    System.out.println("-----postid (new) = " + postid);
 
-                // make new post with the next postid, save it to the database
-                pstmt = con.prepareStatement("INSERT INTO Posts(username, title, body, postid, created, modified) VALUES (?, ?, ?, ?, ?, ?);");
-                pstmt.setString(1, username);
-                pstmt.setString(2, title);
-                pstmt.setString(3, body);
-                pstmt.setInt(4, postid);
-                Date currDate = new Date();
-                String modified = dateFormat.format(currDate);
-                pstmt.setString(5, modified);
-                pstmt.setString(6, modified);
-                pstmt.executeUpdate();
-            }
-
-            // if postid > 0, check if (username, postid) row exists in the database
-            else if(postid > 0) {
-                System.out.println("-----postid (>0) = " + postid);
-                // check to see if username and postid exist in the database
-                pstmt = con.prepareStatement("SELECT * FROM Posts WHERE username = ? AND postid = ?;");
-                pstmt.setString(1, username);
-                pstmt.setInt(2, postid);
-
-                rs = pstmt.executeQuery();
-                while(rs.next())
-                {
-                    // if (username, postid) row exists in the database, update the row with new title, body, and modification date
-                    pstmt = con.prepareStatement("UPDATE Posts SET title = ?, body = ?, modified = ? WHERE username = ? AND postid = ?;");
-                    pstmt.setString(1, title);
-                    pstmt.setString(2, body);
+                    // make new post with the next postid, save it to the database
+                    pstmt = con.prepareStatement("INSERT INTO Posts(username, title, body, postid, created, modified) VALUES (?, ?, ?, ?, ?, ?);");
+                    pstmt.setString(1, username);
+                    pstmt.setString(2, title);
+                    pstmt.setString(3, body);
+                    pstmt.setInt(4, postid);
                     Date currDate = new Date();
                     String modified = dateFormat.format(currDate);
-                    pstmt.setString(3, modified);
-                    pstmt.setString(4, username);
-                    pstmt.setInt(5, postid);
-
+                    pstmt.setString(5, modified);
+                    pstmt.setString(6, modified);
                     pstmt.executeUpdate();
                 }
-                // if (username, postid) row does not exist, do not make any change to the database
+
+                // if postid > 0, check if (username, postid) row exists in the database
+                else if(postid > 0) {
+                    System.out.println("-----postid (>0) = " + postid);
+                    // check to see if username and postid exist in the database
+                    pstmt = con.prepareStatement("SELECT * FROM Posts WHERE username = ? AND postid = ?;");
+                    pstmt.setString(1, username);
+                    pstmt.setInt(2, postid);
+
+                    rs = pstmt.executeQuery();
+                    while(rs.next())
+                    {
+                        // if (username, postid) row exists in the database, update the row with new title, body, and modification date
+                        pstmt = con.prepareStatement("UPDATE Posts SET title = ?, body = ?, modified = ? WHERE username = ? AND postid = ?;");
+                        pstmt.setString(1, title);
+                        pstmt.setString(2, body);
+                        Date currDate = new Date();
+                        String modified = dateFormat.format(currDate);
+                        pstmt.setString(3, modified);
+                        pstmt.setString(4, username);
+                        pstmt.setInt(5, postid);
+
+                        pstmt.executeUpdate();
+                    }
+                    // if (username, postid) row does not exist, do not make any change to the database
+                }
             }
 
-            
+            else 
+            {
+                this.handleInvalidRequest(request, response);
+            }     
             
         }
         catch(Exception e)
