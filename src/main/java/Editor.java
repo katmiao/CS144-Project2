@@ -469,7 +469,8 @@ public class Editor extends HttpServlet {
                 // if postid == 0, assign a new postid, and save the content as a “new post”
                 if (postid == 0) {
                     // find next postid
-                    pstmt = con.prepareStatement("SELECT MAX(postid) AS maxPID FROM Posts;");
+                    pstmt = con.prepareStatement("SELECT MAX(postid) AS maxPID FROM Posts WHERE username = ?;");
+                    pstmt.setString(1, username);
                     rs = pstmt.executeQuery();
                     while(rs.next())
                     {
